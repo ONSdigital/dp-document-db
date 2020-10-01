@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/ONSdigital/dp-document-db/database"
 	"github.com/spf13/cobra"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -24,7 +23,7 @@ func run() error {
 		Short: "TODO",
 	}
 
-	root.AddCommand(ping())
+	root.AddCommand(ping(), insert())
 
 	return root.Execute()
 }
@@ -39,15 +38,49 @@ func ping() *cobra.Command {
 				return err
 			}
 
-			ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-			defer cli.Disconnect(ctx)
+			ctx, cancel := database.Ctx()
+			defer cancel()
 
 			err = cli.Ping(ctx, nil)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("connected to documentDB successful!s")
+			fmt.Println("connected to documentDB successful!")
+			return nil
+		},
+	}
+
+	cmd.Flags().StringP("username", "u", "", "DocumentDB username (required)")
+	cmd.MarkFlagRequired("username")
+
+	cmd.Flags().StringP("password", "p", "", "DocumentDB password (required)")
+	cmd.MarkFlagRequired("password")
+
+	return cmd
+}
+
+func insert() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "insert",
+		Short: "insert a value into the database",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cli, err := getClient(cmd)
+			if err != nil {
+				return err
+			}
+
+			collection := cli.Database("metal-wiki").Collection("guitarists")
+
+			ctx, cancel := database.Ctx()
+			defer cancel()
+
+			res, err := collection.InsertOne(ctx, bson.M{"name": "James Hetfield", "band": "Metallica"})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("inserted 1 record ID: %s\n", res.InsertedID)
 			return nil
 		},
 	}

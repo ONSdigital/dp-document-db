@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ONSdigital/log.go/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -22,6 +21,9 @@ const (
 
 	// Timeout operations after N seconds
 	connectTimeout = 5
+
+	// Timeout queries after N seconds
+	queryTimeout = 5
 
 	// Which instances to read from
 	readPreference = "secondaryPreferred"
@@ -71,8 +73,12 @@ func NewClient(username, password string) (*mongo.Client, error) {
 		return nil, ClientErr{Message: "Failed to ping cluster: %v", Cause: err}
 	}
 
-	log.Event(context.Background(), "Successfully connected to DocumentDB", log.INFO)
+	fmt.Println("successfully connected to DocumentDB")
 	return client, nil
+}
+
+func Ctx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), time.Second*queryTimeout)
 }
 
 func getCustomTLSConfig(caFile string) (*tls.Config, error) {
