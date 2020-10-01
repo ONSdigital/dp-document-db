@@ -26,7 +26,7 @@ const (
 	// Which instances to read from
 	readPreference = "secondaryPreferred"
 
-	connectionStringTemplate = "//mongodb://%s:%s@%s/?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0&readPreference=%s&retryWrites=false"
+	connectionStringTemplate = "mongodb://%s:%s@%s/?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0&readPreference=%s&retryWrites=false"
 )
 
 type ClientErr struct {
@@ -41,14 +41,6 @@ func (e ClientErr) Error() string {
 
 	return fmt.Sprintf("%s: %s", e.Message, e.Cause.Error())
 }
-
-func NewCliErr(message string, cause error) error {
-	return ClientErr{
-		Cause:   cause,
-		Message: message,
-	}
-}
-
 
 func NewClient(username, password string) (*mongo.Client, error) {
 	clusterEndpoint := os.Getenv("DB_ENDPOINT")
