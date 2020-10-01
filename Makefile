@@ -1,4 +1,3 @@
-PHONY: debug
-debug:
+PHONY: build
+build:
 	go build -o cli
-	./cli
