@@ -1,4 +1,4 @@
-package database
+package v1
 
 import (
 	"context"
@@ -6,13 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/ONSdigital/dp-document-db/certs"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
-	"io/ioutil"
 )
 
 const (
@@ -49,7 +45,7 @@ func NewClient(username, password string) (*mongo.Client, error) {
 
 	connectionURI := fmt.Sprintf(connectionStringTemplate, username, password, clusterEndpoint, readPreference)
 
-	tlsConfig, err := getCustomTLSConfig(caFilePath)
+	tlsConfig, err := certs.GetCustomTLSConfig(caFilePath)
 	if err != nil {
 		return nil, ClientErr{Message: "Failed getting TLS configuration", Cause: err}
 	}
@@ -79,22 +75,4 @@ func NewClient(username, password string) (*mongo.Client, error) {
 
 func Ctx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), time.Second*queryTimeout)
-}
-
-func getCustomTLSConfig(caFile string) (*tls.Config, error) {
-	tlsConfig := new(tls.Config)
-	certs, err := ioutil.ReadFile(caFile)
-
-	if err != nil {
-		return tlsConfig, err
-	}
-
-	tlsConfig.RootCAs = x509.NewCertPool()
-	ok := tlsConfig.RootCAs.AppendCertsFromPEM(certs)
-
-	if !ok {
-		return tlsConfig, errors.New("failed parsing pem file")
-	}
-
-	return tlsConfig, nil
 }
