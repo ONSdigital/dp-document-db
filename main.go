@@ -31,7 +31,7 @@ func run() error {
 
 func v1Command() *cobra.Command {
 	cmd := &cobra.Command{Use: "v1"}
-	ping := &cobra.Command{
+	ping := addUsernamePasswordFlags(&cobra.Command{
 		Use:   "ping",
 		Short: "Ping the DocumentDB instance",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -51,9 +51,9 @@ func v1Command() *cobra.Command {
 			fmt.Println("connected to documentDB successful!")
 			return nil
 		},
-	}
+	})
 
-	insert := &cobra.Command{
+	insert := addUsernamePasswordFlags(&cobra.Command{
 		Use:   "insert",
 		Short: "insert a value into the database",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -75,19 +75,20 @@ func v1Command() *cobra.Command {
 			fmt.Printf("inserted 1 record ID: %s\n", res.InsertedID)
 			return nil
 		},
-	}
+	})
 
 	cmd.AddCommand(ping, insert)
-	addUsernamePasswordFlags(cmd)
 	return cmd
 }
 
-func addUsernamePasswordFlags(cmd *cobra.Command) {
+func addUsernamePasswordFlags(cmd *cobra.Command) *cobra.Command {
 	cmd.Flags().StringP("username", "u", "", "DocumentDB username (required)")
 	cmd.MarkFlagRequired("username")
 
 	cmd.Flags().StringP("password", "p", "", "DocumentDB password (required)")
 	cmd.MarkFlagRequired("password")
+
+	return cmd
 }
 
 func getV1Client(cmd *cobra.Command) (*mongo.Client, error) {
@@ -110,7 +111,7 @@ func v2Command() *cobra.Command {
 		Short: "use the global sign mongo lb to connect to the cluster",
 	}
 
-	ping := &cobra.Command{
+	ping := addUsernamePasswordFlags(&cobra.Command{
 		Use:   "ping",
 		Short: "ping the mongo cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -137,9 +138,8 @@ func v2Command() *cobra.Command {
 			fmt.Println("mgo global sign ping successful")
 			return nil
 		},
-	}
+	})
 
 	v2Cmd.AddCommand(ping)
-	addUsernamePasswordFlags(v2Cmd)
 	return v2Cmd
 }
