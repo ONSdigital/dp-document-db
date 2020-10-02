@@ -130,12 +130,21 @@ func v2Command() *cobra.Command {
 				return err
 			}
 
+			defer session.Close()
+
 			err = session.Ping()
 			if err != nil {
 				return err
 			}
 
 			fmt.Println("mgo global sign ping successful")
+
+			dbs, err := session.DatabaseNames()
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("dbs: %+v\n", dbs)
 			return nil
 		},
 	})
