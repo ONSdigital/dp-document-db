@@ -1,0 +1,14 @@
+FROM golang:1.15
+
+ARG BIND_ADDR
+
+# Create app directory
+WORKDIR /app
+
+ENV HUMAN_LOG 1
+ENV BIND_ADDR :22300
+
+COPY bin/dp-recipe-api-linux /app/
+COPY bin/rds-combined-ca-bundle.pem /app/
+
+CMD ./dp-recipe-api-linux

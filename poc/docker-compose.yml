@@ -1,0 +1,26 @@
+version: '3'
+services:
+  api-stub:
+    container_name: doc_db_api_stub
+    environment:
+      - BIND_ADDR=:8082
+    build:
+      context: .
+      dockerfile: Dockerfile.stub
+    ports:
+      - "0.0.0.0:8082:8082"
+  dp-recipe-api:
+    container_name: doc_db_recipe_api
+    environment:
+      - BIND_ADDR=:22300
+      - ZEBEDEE_URL=${ZEBEDEE_URL}
+      - MONGODB_IS_DOC_DB=${MONGODB_IS_DOC_DB}
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_USERNAME=${MONGODB_USERNAME}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD}
+      - MONGODB_CERT=${MONGODB_CERT}
+    build:
+      context: .
+      dockerfile: Dockerfile.recipe
+    ports:
+      - "0.0.0.0:22300:22300"

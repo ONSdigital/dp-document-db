@@ -1,0 +1,7 @@
+{
+  "7e0d1238-cf25-4239-adfb-7f1a460a0580": {
+    "id": "7e0d1238-cf25-4239-adfb-7f1a460a0580",
+    "identifier": "Weyland-Yutani Corporation",
+    "permissions": ["CREATE", "READ", "UPDATE", "DELETE"]
+  }
+}
