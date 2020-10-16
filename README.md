@@ -10,7 +10,7 @@ instance instead of Mongodb using a stubbed auth/identity API in place of Zebede
 ### Prerequisites
 - Go >= 1.15
 - Go Modules enabled.
-- The `ons-web-development.pem` gpg.
+- A copy of `ons-web-development.pem`.
 - Guide assumes you have already set up a DoumentDB cluster & EC2 instance (see AWS documentation).
 
 Get the code:
@@ -32,7 +32,7 @@ SSH on to the EC2 box:
 make ssh
 ```
 
-Set the following environment vars have been set on the EC2 instance:
+Set the following environment vars on the EC2 instance:
 
 ```bash
 # The DocumentDB instance URL:PORT - see AWS console.
@@ -50,7 +50,7 @@ MONGODB_CERT=rds-combined-ca-bundle.pem
 # Enable human log format for the Go apps. 
 HUMAN_LOG=1
 
-# The Zebedee stub URL to use (use this value - **"api-stub"** is the container name in the docker-compose.yml)
+# The Zebedee stub URL to use (use this value - "api-stub" is the container name in the docker-compose.yml)
 ZEBEDEE_URL=http://api-stub:8082
 
 # Flag to configure the recipe API to use DocumentDB instead of standard Mongo.
@@ -58,7 +58,7 @@ MONGODB_IS_DOC_DB=true
 ```
 Exit the SSH connection.
 
-### Install on EC2 and run the demo
+### Install the apps on the box and run the demo
 
 1) Package the POC binaries & docker config and SCP them on to the EC2 instance:
     ```
@@ -75,7 +75,7 @@ Exit the SSH connection.
     ./install.sh
     ```
     This will stop and clean up any existing running containers, build and start new containers using the latest 
-    binaries version using docker-compose. To check the app logs run `docker logs -f <container_name>`. Exit SSH session.
+    binaries. To check the app logs run `docker logs -f <container_name>`. Exit SSH session.
 
 4) Assuming everything has been installed & configured correctly you should now be able run the demo app. From the project root dir locally run:
    ```
