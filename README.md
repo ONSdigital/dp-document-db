@@ -18,6 +18,7 @@ Get the code:
 git clone git@github.com:ONSdigital/dp-document-db-spike.git
 ```
 
+### Set up
 Set the following environment vars locally:
 ```bash
 # The user/address EC2 instance running the Docdb cluster.
@@ -57,30 +58,85 @@ MONGODB_IS_DOC_DB=true
 ```
 Exit the SSH connection.
 
-Package up the POC binaries and Docker configurations, scp it on to the EC2 instance and the run install script to 
-install and start up the POC.
-```bash
-make install
-```
-Assuming everything has been installed & configured correctly you should now be able to curl the GET recipes endpoint:
-```
-curl -XGET "http://${DOC_DB_EC2_ADDR}:22300/recipes" | jq .
-```
-If this returns an empty response you can try posting a new recipe:
-```bash
-curl -h "Content-Type: application/json" -d `{"count":1,"limit":1,"items":[{"id":"2943f3c5-c3f1-4a9a-aa6e-14d21c33524c","alias":"CPIH","format":"v4","files":[{"description":"CPIH v4"}],"output_instances":[{"dataset_id":"cpih01","editions":["time-series"],"title":"Consumer Prices Index including owner occupiers' housing costs (CPIH)","code_lists":[{"id":"mmm-yy","href":"http://localhost:22400/code-lists/mmm-yy","name":"time","is_hierarchy":false},{"id":"uk-only","href":"http://localhost:22400/code-lists/uk-only","name":"geography","is_hierarchy":true},{"id":"cpih1dim1aggid","href":"http://localhost:22400/code-lists/cpih1dim1aggid","name":"aggregate","is_hierarchy":true}]}]}],"total_count":1}` http://${DOC_DB_EC2_ADDR}:22300/recipes 
+### Install on EC2 and run the demo
 
-```
+1) Package the POC binaries & docker config and SCP them on to the EC2 instance:
+    ```
+    make install
+    ```
 
+2) SSH onto the box:
+    ```
+    make ssh
+    ```
 
-curl -d "@example-recipe.json" \
-    -h "Content-Type: application/json" \
-    -X POST http://54.246.67.239:22300/recipes
-    
-curl -d @example-recipe.json  -H "Content-Type: application/json" -H "Authorization: Bearer 7e0d1238-cf25-4239-adfb-7f1a460a0580" -XPOST http://54.246.67.239:22300/recipes
-    
+3) Run the install script from the home dir:
+    ```
+    ./install.sh
+    ```
+    This will stop and clean up any existing running containers, build and start new containers using the latest 
+    binaries version using docker-compose. To check the app logs run `docker logs -f <container_name>`
 
-curl -d `{"alias":"CPIH","files":[{"description":"CPIH v4"}],"format":"v4","id":"2943f3c5-c3f1-4a9a-aa6e-14d21c33524c","output_instances":[{"code_lists":[{"href":"http://localhost:22400/code-lists/mmm-yy","id":"mmm-yy","is_hierarchy":false,"name":"time"},{"href":"http://localhost:22400/code-lists/uk-only","id":"uk-only","is_hierarchy":true,"name":"geography"},{"href":"http://localhost:22400/code-lists/cpih1dim1aggid","id":"cpih1dim1aggid","is_hierarchy":true,"name":"aggregate"}],"dataset_id":"cpih01","editions":["time-series"],"title":"Consumer Prices Index including owner occupiers' housing costs (CPIH)"}]}` -H "Content-Type: application/json" -H "Authorization: Bearer 7e0d1238-cf25-4239-adfb-7f1a460a0580" -XPOST http://54.246.67.239:22300/recipes
-
-
+4) Assuming everything has been installed & configured correctly you should now be able run the demo app:
+   ```
+   make example
+   ```
+   This POST a new recipe to the recipe API (which is now against DocumentDB) & then send a GET request to retrieve it 
+   by ID and pretty print the response JSON in the console. You should see output similar to:
+   
+   ```bash
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 posting new recipe
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 executing request to Recipe API
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 post recipe response status OK
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 create recipe completed successfully : ID: 2943f3c5-c3f1-4a9a-aa6e-14d21c33524c Alias CPIH
+   
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 retrieving recipe from API
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 executing request to Recipe API
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 get recipe response status OK
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 get recipe completed successfully : ID: 2943f3c5-c3f1-4a9a-aa6e-14d21c33524c Alias CPIH
+   
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 recipe response json:
+   
+   {
+     "id": "2943f3c5-c3f1-4a9a-aa6e-14d21c33524c",
+     "alias": "CPIH",
+     "format": "v4",
+     "files": [
+       {
+         "description": "CPIH v4"
+       }
+     ],
+     "output_instances": [
+       {
+         "dataset_id": "cpih01",
+         "editions": [
+           "time-series"
+         ],
+         "title": "Consumer Prices Index including owner occupiers' housing costs (CPIH)",
+         "code_lists": [
+           {
+             "id": "mmm-yy",
+             "href": "http://localhost:22400/code-lists/mmm-yy",
+             "name": "time"
+           },
+           {
+             "id": "uk-only",
+             "href": "http://localhost:22400/code-lists/uk-only",
+             "name": "geography",
+             "is_hierarchy": true
+           },
+           {
+             "id": "cpih1dim1aggid",
+             "href": "http://localhost:22400/code-lists/cpih1dim1aggid",
+             "name": "aggregate",
+             "is_hierarchy": true
+           }
+         ]
+       }
+     ]
+   }
+   
+    [doc-db-demo] 🦄  2020-10-16T15:32:37+01:00 demo complete 🚀  🎉
+   ```
+End.
  
