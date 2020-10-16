@@ -75,13 +75,13 @@ Exit the SSH connection.
     ./install.sh
     ```
     This will stop and clean up any existing running containers, build and start new containers using the latest 
-    binaries version using docker-compose. To check the app logs run `docker logs -f <container_name>`
+    binaries version using docker-compose. To check the app logs run `docker logs -f <container_name>`. Exit SSH session.
 
-4) Assuming everything has been installed & configured correctly you should now be able run the demo app:
+4) Assuming everything has been installed & configured correctly you should now be able run the demo app. From the project root dir locally run:
    ```
    make example
    ```
-   This POST a new recipe to the recipe API (which is now against DocumentDB) & then send a GET request to retrieve it 
+   This will POST a new recipe request to the recipe API (which is now running against DocumentDB) & then send a GET request to retrieve it 
    by ID and pretty print the response JSON in the console. You should see output similar to:
    
    ```bash
