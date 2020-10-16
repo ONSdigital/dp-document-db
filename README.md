@@ -11,7 +11,7 @@ instance instead of Mongodb using a stubbed auth/identity API in place of Zebede
 - Go >= 1.15
 - Go Modules enabled.
 - The `ons-web-development.pem` gpg.
-- Guide assumed you have already set up a DoumentDB cluster & EC2 instance.
+- Guide assumes you have already set up a DoumentDB cluster & EC2 instance (see AWS documentation).
 
 Get the code:
 ```bash
@@ -32,7 +32,7 @@ SSH on to the EC2 box:
 make ssh
 ```
 
-Ensure the following environment vars have been set on the EC2 instance:
+Set the following environment vars have been set on the EC2 instance:
 
 ```bash
 # The DocumentDB instance URL:PORT - see AWS console.
@@ -50,8 +50,8 @@ MONGODB_CERT=rds-combined-ca-bundle.pem
 # Enable human log format for the Go apps. 
 HUMAN_LOG=1
 
-# The Zebedee stub URL to use (use this value - stub-api is the container name in the docker-compose.yml)
-ZEBEDEE_URL=http://stub-api:8082
+# The Zebedee stub URL to use (use this value - **"api-stub"** is the container name in the docker-compose.yml)
+ZEBEDEE_URL=http://api-stub:8082
 
 # Flag to configure the recipe API to use DocumentDB instead of standard Mongo.
 MONGODB_IS_DOC_DB=true
