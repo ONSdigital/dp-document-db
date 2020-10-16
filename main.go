@@ -1,154 +1,147 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 
-	"github.com/ONSdigital/dp-document-db/v1"
-	v2 "github.com/ONSdigital/dp-document-db/v2"
+	"github.com/ONSdigital/dp-recipe-api/recipe"
+	log "github.com/daiLlew/funkylog"
 	"github.com/spf13/cobra"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Identity struct {
+	ID          string   `json:"id,omitempty"`
+	Identifier  string   `json:"identifier,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
+}
+
 func main() {
+	log.Init("docdb-poc")
+
 	if err := run(); err != nil {
-		fmt.Printf("application error: %+v\n", err)
+		log.Err("application error: %+v\n", err)
 		os.Exit(1)
 	}
 }
 
 func run() error {
 	root := &cobra.Command{
-		Use:   "db",
+		Use:   "poc",
 		Short: "TODO",
 	}
 
-	root.AddCommand(v1Command(), v2Command())
+	root.AddCommand(poc())
 
 	return root.Execute()
 }
 
-func v1Command() *cobra.Command {
-	cmd := &cobra.Command{Use: "v1"}
-	ping := addUsernamePasswordFlags(&cobra.Command{
-		Use:   "ping",
-		Short: "Ping the DocumentDB instance",
+func poc() *cobra.Command {
+	return &cobra.Command{
+		Use:   "post-recipe",
+		Short: "post a the test recipe",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := getV1Client(cmd)
+			recipeBody, err := getRecipeBody()
 			if err != nil {
 				return err
 			}
 
-			ctx, cancel := v1.Ctx()
-			defer cancel()
-
-			err = cli.Ping(ctx, nil)
+			identity, err := getIdentity()
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("connected to documentDB successful!")
+			docDBEndpoint := os.Getenv("DOC_DB_POC_IP")
+			if docDBEndpoint == "" {
+				return fmt.Errorf("env var %q expected but not found", "DOC_DB_POC_IP")
+			}
+
+ 			newRecipeEndpoint := fmt.Sprintf("http://%s:22300/recipes", docDBEndpoint)
+			respBody, status, err := execRequest(http.MethodPost, newRecipeEndpoint, identity.ID, recipeBody)
+			if err != nil {
+				return err
+			}
+
+			if status != http.StatusOK {
+				return fmt.Errorf("incorrect http status for post recipie expected %d but was %d", http.StatusOK, status)
+			}
+
+			log.Info("post recipe response status OK")
+
+			var r recipe.Response
+			err = json.Unmarshal(respBody, &r)
+			if err != nil {
+				return err
+			}
+
+			recipeJson, err := json.MarshalIndent(r, "", "  ")
+			if err != nil {
+				return err
+			}
+
+			log.Info("create recipe completed successfully : ID: %s Alias %s\n", r.ID, r.Alias)
+			log.Info("\n%s", string(recipeJson))
 			return nil
 		},
-	})
-
-	insert := addUsernamePasswordFlags(&cobra.Command{
-		Use:   "insert",
-		Short: "insert a value into the database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := getV1Client(cmd)
-			if err != nil {
-				return err
-			}
-
-			collection := cli.Database("metal-wiki").Collection("guitarists")
-
-			ctx, cancel := v1.Ctx()
-			defer cancel()
-
-			res, err := collection.InsertOne(ctx, bson.M{"name": "James Hetfield", "band": "Metallica"})
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("inserted 1 record ID: %s\n", res.InsertedID)
-			return nil
-		},
-	})
-
-	cmd.AddCommand(ping, insert)
-	return cmd
+	}
 }
 
-func addUsernamePasswordFlags(cmd *cobra.Command) *cobra.Command {
-	cmd.Flags().StringP("username", "u", "", "DocumentDB username (required)")
-	cmd.MarkFlagRequired("username")
-
-	cmd.Flags().StringP("password", "p", "", "DocumentDB password (required)")
-	cmd.MarkFlagRequired("password")
-
-	return cmd
-}
-
-func getV1Client(cmd *cobra.Command) (*mongo.Client, error) {
-	username, err := cmd.Flags().GetString("username")
+func getRecipeBody() (*bytes.Buffer, error) {
+	recipeBytes, err := ioutil.ReadFile("example-recipe.json")
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := cmd.Flags().GetString("password")
+	return bytes.NewBuffer(recipeBytes), nil
+}
+
+func getIdentity() (*Identity, error) {
+	identityBytes, err := ioutil.ReadFile("poc/bin/identity_data.json")
 	if err != nil {
 		return nil, err
 	}
 
-	return v1.NewClient(username, password)
-}
-
-func v2Command() *cobra.Command {
-	v2Cmd := &cobra.Command{
-		Use:   "v2",
-		Short: "use the global sign mongo lb to connect to the cluster",
+	var identities map[string]Identity
+	err = json.Unmarshal(identityBytes, &identities)
+	if err != nil {
+		return nil, err
 	}
 
-	ping := addUsernamePasswordFlags(&cobra.Command{
-		Use:   "ping",
-		Short: "ping the mongo cluster",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			username, err := cmd.Flags().GetString("username")
-			if err != nil {
-				return err
-			}
+	var identity Identity
+	for _, item := range identities {
+		identity = item
+		break
+	}
 
-			password, err := cmd.Flags().GetString("password")
-			if err != nil {
-				return err
-			}
+	return &identity, nil
+}
 
-			session, err := v2.NewSession(username, password)
-			if err != nil {
-				return err
-			}
+func execRequest(method, url, token string, reqBody io.Reader) ([]byte, int, error) {
+	req, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return nil, 0, err
+	}
 
-			defer session.Close()
+	req.Header.Add("Authorization", "Bearer "+token)
 
-			err = session.Ping()
-			if err != nil {
-				return err
-			}
+	cli := http.Client{Timeout: time.Second * 5}
 
-			fmt.Println("mgo global sign ping successful")
+	log.Info("executing request to Recipe API")
+	resp, err := cli.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
 
-			dbs, err := session.DatabaseNames()
-			if err != nil {
-				return err
-			}
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, err
+	}
 
-			fmt.Printf("dbs: %+v\n", dbs)
-			return nil
-		},
-	})
-
-	v2Cmd.AddCommand(ping)
-	return v2Cmd
+	return respBody, resp.StatusCode, nil
 }

@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile.stub
     ports:
-      - "0.0.0.0:8082:8082"
+      - "8082:8082"
   dp-recipe-api:
     container_name: doc_db_recipe_api
     environment:

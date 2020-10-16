@@ -29,8 +29,6 @@ unpack_binaries() {
 
 stop_containers() {
   echo "stopping running instance"
-  docker-compose stop
-
   for c in ${containers[@]}; do
     echo "stopping ${c} container"
     docker stop ${c} || true

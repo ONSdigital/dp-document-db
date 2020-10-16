@@ -12,7 +12,10 @@ install:
 	scp -i ~/.ssh/ons-web-development.pem ${tar_file} ${addr}:
 
 	@echo "scp install script to EC2 instance:  ${addr}"
-	scp -i ~/.ssh/ons-web-development.pem poc/install-poc.sh ${addr}:
+	scp -i ~/.ssh/ons-web-development.pem poc/install.sh ${addr}:
+
+	@echo "cleaning up"
+	rm ${tar_file}
 
 	@echo "installation complete"
 
@@ -20,3 +23,8 @@ PHONY: ssh
 ssh:
 	@echo "SSHing on top EC2 instance: ${addr}"
 	ssh -i ~/.ssh/ons-web-development.pem ${addr}
+
+PHONY: example
+example:
+	go build -o demo
+	./demo post-recipe

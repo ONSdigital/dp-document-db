@@ -1,0 +1,39 @@
+{
+  "alias": "CPIH",
+  "files": [
+    {
+      "description": "CPIH v4"
+    }
+  ],
+  "format": "v4",
+  "id": "2943f3c5-c3f1-4a9a-aa6e-14d21c33524c",
+  "output_instances": [
+    {
+      "code_lists": [
+        {
+          "href": "http://localhost:22400/code-lists/mmm-yy",
+          "id": "mmm-yy",
+          "is_hierarchy": false,
+          "name": "time"
+        },
+        {
+          "href": "http://localhost:22400/code-lists/uk-only",
+          "id": "uk-only",
+          "is_hierarchy": true,
+          "name": "geography"
+        },
+        {
+          "href": "http://localhost:22400/code-lists/cpih1dim1aggid",
+          "id": "cpih1dim1aggid",
+          "is_hierarchy": true,
+          "name": "aggregate"
+        }
+      ],
+      "dataset_id": "cpih01",
+      "editions": [
+        "time-series"
+      ],
+      "title": "Consumer Prices Index including owner occupiers' housing costs (CPIH)"
+    }
+  ]
+}
